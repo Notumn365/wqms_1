@@ -1,4 +1,4 @@
-package com.weiqiu.wqmso.model.dto.questionBankQuestion;
+package com.weiqiu.wqmso.model.dto.questionbankquestion;
 
 import lombok.Data;
 

@@ -1,4 +1,4 @@
-package com.weiqiu.wqmso.model.dto.questionBank;
+package com.weiqiu.wqmso.model.dto.questionbankquestion;
 
 import lombok.Data;
 
@@ -6,12 +6,12 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 更新题库请求
+ * 更新题库题目关联请求
  *
  *
  */
 @Data
-public class QuestionBankUpdateRequest implements Serializable {
+public class QuestionBankQuestionUpdateRequest implements Serializable {
 
     /**
      * id
