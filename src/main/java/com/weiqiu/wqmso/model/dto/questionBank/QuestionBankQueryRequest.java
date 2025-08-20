@@ -1,4 +1,4 @@
-package com.weiqiu.wqmso.model.dto.questionbankquestion;
+package com.weiqiu.wqmso.model.dto.questionBank;
 
 import com.weiqiu.wqmso.common.PageRequest;
 import lombok.Data;
@@ -8,13 +8,13 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 查询题库题目关联请求
+ * 查询题库请求
  *
  *
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class QuestionBankQuestionQueryRequest extends PageRequest implements Serializable {
+public class QuestionBankQueryRequest extends PageRequest implements Serializable {
 
     /**
      * id
@@ -37,14 +37,14 @@ public class QuestionBankQuestionQueryRequest extends PageRequest implements Ser
     private String title;
 
     /**
-     * 内容
+     * 描述
      */
-    private String content;
+    private String description;
 
     /**
-     * 标签列表
+     * 图片
      */
-    private List<String> tags;
+    private String picture;
 
     /**
      * 创建用户 id

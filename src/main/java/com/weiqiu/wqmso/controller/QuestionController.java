@@ -1,5 +1,9 @@
 package com.weiqiu.wqmso.controller;
 
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.weiqiu.wqmso.annotation.AuthCheck;
 import com.weiqiu.wqmso.common.BaseResponse;
@@ -14,8 +18,11 @@ import com.weiqiu.wqmso.model.dto.question.QuestionEditRequest;
 import com.weiqiu.wqmso.model.dto.question.QuestionQueryRequest;
 import com.weiqiu.wqmso.model.dto.question.QuestionUpdateRequest;
 import com.weiqiu.wqmso.model.entity.Question;
+import com.weiqiu.wqmso.model.entity.QuestionBankQuestion;
 import com.weiqiu.wqmso.model.entity.User;
 import com.weiqiu.wqmso.model.vo.QuestionVO;
+import com.weiqiu.wqmso.service.QuestionBankQuestionService;
+import com.weiqiu.wqmso.service.QuestionBankService;
 import com.weiqiu.wqmso.service.QuestionService;
 import com.weiqiu.wqmso.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 题目接口
@@ -39,6 +47,9 @@ public class QuestionController {
     private QuestionService questionService;
 
     @Resource
+    private QuestionBankQuestionService questionBankQuestionService;
+
+    @Resource
     private UserService userService;
 
     // region 增删改查
@@ -51,6 +62,7 @@ public class QuestionController {
      * @return
      */
     @PostMapping("/add")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionAddRequest == null, ErrorCode.PARAMS_ERROR);
         // todo 在此处将实体类和 DTO 进行转换
@@ -77,6 +89,7 @@ public class QuestionController {
      * @return
      */
     @PostMapping("/delete")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteQuestion(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -150,9 +163,21 @@ public class QuestionController {
     public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest) {
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
+        // 题目表的查询条件
+        QueryWrapper<Question> queryWrapper = questionService.getQueryWrapper(questionQueryRequest);
+        // 根据题库查询题目列表接口
+        long questionBankId = questionQueryRequest.getQuestionBankId();
+        if (questionBankId != null) {
+            // 查询题库内的题目 id
+            LambdaQueryWrapper<QuestionBankQuestion> lambdaQueryWrapper = Wrappers.lambdaQuery(QuestionBankQuestion.class)
+                    .select(QuestionBankQuestion::getQuestionBankId)
+                    .eq(QuestionBankQuestion::getQuestionBankId, questionBankId);
+            list<QuestionBankQuestion> questionList = questionBankQuestionService.list(lambdaQueryWrapper);
+        }
+
         // 查询数据库
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
-                questionService.getQueryWrapper(questionQueryRequest));
+                );
         return ResultUtils.success(questionPage);
     }
 
@@ -203,13 +228,14 @@ public class QuestionController {
     }
 
     /**
-     * 编辑题目（给用户使用）
+     * 编辑题目（给用户使用_改主意了，不给用户用了，仅管理员可用）
      *
      * @param questionEditRequest
      * @param request
      * @return
      */
     @PostMapping("/edit")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> editQuestion(@RequestBody QuestionEditRequest questionEditRequest, HttpServletRequest request) {
         if (questionEditRequest == null || questionEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -217,6 +243,10 @@ public class QuestionController {
         // todo 在此处将实体类和 DTO 进行转换
         Question question = new Question();
         BeanUtils.copyProperties(questionEditRequest, question);
+        List<String> tags = questionEditRequest.getTags();
+        if (tags != null) {
+            question.setTags(JSONUtil.toJsonStr(tags));
+        }
         // 数据校验
         questionService.validQuestion(question, false);
         User loginUser = userService.getLoginUser(request);
