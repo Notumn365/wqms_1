@@ -165,7 +165,7 @@ public class QuestionController {
         long size = questionQueryRequest.getPageSize();
         // 题目表的查询条件
         QueryWrapper<Question> queryWrapper = questionService.getQueryWrapper(questionQueryRequest);
-        // 根据题库查询题目列表接口
+        // 根据题库查询题目列表接口 // push
         long questionBankId = questionQueryRequest.getQuestionBankId();
         if (questionBankId != null) {
             // 查询题库内的题目 id
